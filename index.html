@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080b10">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>IA Trader V3</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080b10;color:#f5f7fa;font-family:Arial,sans-serif}
+.wrap{max-width:900px;margin:auto;padding:18px 14px 44px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+h1{margin:0;font-size:25px}
+.sub{font-size:12px;color:#8c96a5;margin-top:5px}
+.badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.badge{padding:6px 9px;border-radius:999px;font-size:10px;font-weight:800;background:#202631}
+.paper{background:#372d0e;color:#ffd75d}
+.on{background:#103126;color:#65e7aa}
+.off{background:#39191d;color:#ff858e}
+.install{width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:#d4af37;color:#080b10;font-weight:900;font-size:14px}
+.help{display:none;margin-top:10px;border:1px solid #54471e;background:#1c180b;border-radius:12px;padding:11px;color:#ffe88b;font-size:12px;line-height:1.45}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:18px}
+.metric,.card,.signal,.risk{border:1px solid #252d39;background:#11161e;border-radius:15px}
+.metric{padding:14px}
+.metric small{display:block;color:#818c9c;font-size:11px;margin-bottom:7px}
+.metric strong{font-size:18px}
+.section{margin-top:22px}
+.section h2{font-size:16px;margin:0 0 10px}
+.positions,.signals{display:grid;gap:9px}
+.card,.signal,.risk{padding:12px}
+.ctop,.row,.meta{display:flex;justify-content:space-between;gap:8px}
+.coin{font-weight:850;font-size:17px}
+.side{font-size:10px;font-weight:850;padding:5px 7px;border-radius:8px}
+.long{background:#103126;color:#65e7aa}
+.short{background:#39191d;color:#ff858e}
+.pnl,.score{font-size:18px;font-weight:900}
+.row{font-size:12px;color:#8f9aaa;margin-top:10px}
+.row b{color:#edf1f6}
+.track{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.tiny{border:1px solid #222a35;background:#0b0f15;border-radius:9px;padding:7px;text-align:center}
+.tiny small{display:block;color:#738092;font-size:9px}
+.tiny b{font-size:11px}
+.meta{color:#8792a2;font-size:10px;margin-top:7px}
+.pos{color:#65e7aa}
+.neg{color:#ff858e}
+.empty{border:1px dashed #2b3441;border-radius:13px;color:#7f8998;text-align:center;padding:20px;font-size:12px}
+.footer{text-align:center;color:#5f6977;font-size:10px;margin-top:22px}
+@media(min-width:700px){
+  .grid{grid-template-columns:repeat(4,1fr)}
+  .positions{grid-template-columns:repeat(2,1fr)}
+  .signals{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>IA Trader V3</h1><div class="sub" id="updated">Carregando mercado…</div></div>
+    <div class="badges"><span class="badge paper">PAPER</span><span class="badge" id="engine">MOTOR…</span></div>
+  </div>
+
+  <button class="install" id="installBtn">INSTALAR NO CELULAR</button>
+  <div class="help" id="installHelp">No Chrome, toque nos três pontinhos (⋮) e escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</div>
+
+  <div class="grid">
+    <div class="metric"><small>Capital base</small><strong id="capital">—</strong></div>
+    <div class="metric"><small>Equity simulado</small><strong id="equity">—</strong></div>
+    <div class="metric"><small>Resultado aberto</small><strong id="openPnl">—</strong></div>
+    <div class="metric"><small>Taxa de acerto</small><strong id="winRate">—</strong></div>
+  </div>
+
+  <div class="section"><h2>Proteção de risco</h2><div class="risk" id="risk">Carregando proteção…</div></div>
+  <div class="section"><h2>Posições abertas <span id="posCount"></span></h2><div class="positions" id="positions"><div class="empty">Carregando posições…</div></div></div>
+  <div class="section"><h2>Mercado agora</h2><div class="signals" id="signals"></div></div>
+
+  <div class="footer">Atualização automática a cada 10 segundos<br>Paper trading — nenhuma ordem real é enviada à corretora.</div>
+</div>
+
+<script>
+const API="https://wmxyqtvcyzvutajjzivl.supabase.co/functions/v1/ia-trader-v3-app-test/data.json";
+const $=id=>document.getElementById(id);
+const N=x=>Number(x||0);
+const BR=(x,d=2)=>new Intl.NumberFormat('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}).format(N(x));
+const M=x=>'USDT '+BR(x,2);
+const P=x=>BR(x,N(x)<10?4:2);
+const C=x=>N(x)>0?'pos':N(x)<0?'neg':'';
+const DT=x=>x?new Date(x).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
+
+function pcard(p){
+  return `<div class="card">
+    <div class="ctop">
+      <div><span class="coin">${p.symbol.replace('USDT','')}</span> <span class="side ${p.side==='LONG'?'long':'short'}">${p.side}</span></div>
+      <div class="pnl ${C(p.pnl)}">${M(p.pnl)}</div>
+    </div>
+    <div class="row"><span>Entrada <b>${P(p.entry)}</b></span><span>Agora <b>${P(p.current_price)}</b></span></div>
+    <div class="row"><span>Score <b>${p.current_score ?? '—'}</b></span><span>${p.regime||'—'} · ${p.signal||'—'}</span></div>
+    <div class="track">
+      <div class="tiny"><small>STOP</small><b>${P(p.stop)}</b></div>
+      <div class="tiny"><small>TRAIL</small><b>${P(p.trail_stop)}</b></div>
+      <div class="tiny"><small>ALVO</small><b>${P(p.target)}</b></div>
+    </div>
+  </div>`;
+}
+
+function scard(s){
+  return `<div class="signal">
+    <div class="ctop"><b>${s.symbol.replace('USDT','')}</b><span class="score ${C(s.score)}">${s.score>0?'+':''}${s.score}</span></div>
+    <div class="meta"><span>${s.signal}</span><span>${s.regime}</span></div>
+    <div class="meta"><span>15m ${s.score_15m}</span><span>1h ${s.score_1h}</span><span>4h ${s.score_4h}</span></div>
+  </div>`;
+}
+
+async function load(){
+  try {
+    const r=await fetch(API,{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json(), s=d.summary;
+    $('capital').textContent=M(s.capital);
+    $('equity').textContent=M(s.equity);
+    $('equity').className=C(s.equity-s.capital);
+    $('openPnl').textContent=M(s.unrealized);
+    $('openPnl').className=C(s.unrealized);
+    $('winRate').textContent=BR(s.win_rate,1)+'%';
+    $('updated').textContent='Atualizado '+DT(d.now);
+    $('posCount').textContent='('+s.open_positions+')';
+    $('positions').innerHTML=d.positions.length?d.positions.map(pcard).join(''):'<div class="empty">Nenhuma posição aberta.</div>';
+    $('signals').innerHTML=d.signals.map(scard).join('');
+    $('risk').textContent='Limite 24h: '+M(s.capital*d.settings.max_daily_loss_pct/100)+' · realizado 24h: '+M(s.realized24h)+' · máximo '+d.settings.max_open_positions+' posições';
+    const e=d.engine, ok=e&&e.status==='OK'&&e.finished_at&&(Date.now()-new Date(e.finished_at).getTime()<180000);
+    $('engine').textContent=ok?'MOTOR ON':'VERIFICAR MOTOR';
+    $('engine').className='badge '+(ok?'on':'off');
+  } catch(e) {
+    $('updated').textContent='Falha ao atualizar';
+    $('engine').textContent='SEM DADOS';
+    $('engine').className='badge off';
+  }
+}
+load();
+setInterval(load,10000);
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+});
+$('installBtn').addEventListener('click',async()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt=null;
+  } else {
+    $('installHelp').style.display='block';
+  }
+});
+</script>
+</body>
+</html>
