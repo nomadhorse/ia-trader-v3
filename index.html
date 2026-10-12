@@ -7,7 +7,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
-<title>IA Trader V3</title>
+<title>IA Trader — V3 + Laboratório V9</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#080b10;color:#f5f7fa;font-family:Arial,sans-serif}
@@ -54,6 +54,35 @@ h1{margin:0;font-size:25px}
   .positions{grid-template-columns:repeat(2,1fr)}
   .signals{grid-template-columns:repeat(4,1fr)}
 }
+
+/* Laboratório V9: seção apenas de leitura, independente do painel principal. */
+.v9-panel{padding:15px;border:1px solid #3b4c5c;background:linear-gradient(145deg,#111d29,#11161e 70%);border-radius:17px}
+.v9-heading{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}
+.v9-heading h2{margin:0;font-size:17px}
+.v9-sub{color:#9aaec1;font-size:12px;line-height:1.5;margin-top:7px}
+.v9-status{font-size:10px;font-weight:800;border-radius:9px;background:#203645;padding:6px 9px;color:#a6d7ee}
+.v9-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:13px}
+.v9-stat{padding:12px;border:1px solid #283646;background:#0b121b;border-radius:12px;min-width:0}
+.v9-stat small{display:block;color:#9cadbc;font-size:11px;margin-bottom:6px}
+.v9-stat strong{font-size:17px;overflow-wrap:anywhere}
+.v9-divider{border:0;border-top:1px solid #273748;margin:16px 0 12px}
+.v9-caption{margin:0 0 10px;font-size:13px;color:#f0f5f9}
+.v9-strategies{display:grid;gap:9px}
+.v9-strategy{border:1px solid #293c4c;border-radius:13px;background:#101b25;padding:12px}
+.v9-strategy .head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.v9-strategy .head b{font-size:13px}
+.v9-strategy .head strong{font-size:15px}
+.v9-mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}
+.v9-mini span{font-size:11px;color:#91a4b6}
+.v9-mini span b{display:block;margin-top:4px;font-size:12px;color:#e5edf4}
+.v9-hint{font-size:11px;color:#8199ac;line-height:1.5;margin-top:10px}
+.v9-activity{display:grid;gap:7px}
+.v9-entry{padding:9px 11px;background:#0d1620;border:1px solid #253441;border-radius:10px;font-size:12px;line-height:1.5}
+.v9-entry .row{margin-top:3px}
+.v9-warning{color:#c3adb1;background:#241d1d;border-radius:10px;padding:10px;margin-top:12px;font-size:11px;line-height:1.5}
+.v9-empty{color:#94a9ba;font-size:12px;padding:8px 0}
+@media(min-width:700px){.v9-metrics{grid-template-columns:repeat(4,1fr)}.v9-strategies{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
 </style>
 </head>
 <body>
@@ -74,6 +103,30 @@ h1{margin:0;font-size:25px}
   </div>
 
   <div class="section"><h2>Proteção de risco</h2><div class="risk" id="risk">Carregando proteção…</div></div>
+
+  <section class="section v9-panel" id="v9Panel" aria-label="Laboratório IA Trader V9">
+    <div class="v9-heading"><h2>🧪 Laboratório IA Trader V9</h2><span class="v9-status" id="v9Status">CONECTANDO...</span></div>
+    <div class="v9-sub">Pesquisa automática de estratégias com capital fictício. Independente do motor principal e sem ordens reais.</div>
+    <div class="v9-sub" id="v9Updated" aria-live="polite">Carregando dados do laboratório...</div>
+    <div class="v9-metrics">
+      <div class="v9-stat"><small>Lucro/prejuízo simulado</small><strong id="v9Pnl">—</strong></div>
+      <div class="v9-stat"><small>Posições fictícias abertas</small><strong id="v9Open">—</strong></div>
+      <div class="v9-stat"><small>Operações concluídas</small><strong id="v9Closed">—</strong></div>
+      <div class="v9-stat"><small>Decisões nas últimas 24h</small><strong id="v9Decisions24">—</strong></div>
+    </div>
+    <div class="v9-hint" id="v9Summary">Calculando desempenho e verificando a execução.</div>
+    <hr class="v9-divider">
+    <h3 class="v9-caption">Estratégias em avaliação</h3>
+    <div class="v9-strategies" id="v9Strategies"><div class="v9-empty">Carregando estratégias...</div></div>
+    <hr class="v9-divider">
+    <h3 class="v9-caption">Últimas operações do laboratório</h3>
+    <div class="v9-activity" id="v9Trades"><div class="v9-empty">Carregando operações simuladas...</div></div>
+    <hr class="v9-divider">
+    <h3 class="v9-caption">Oportunidades recentes</h3>
+    <div class="v9-activity" id="v9Decisions"><div class="v9-empty">Carregando decisões...</div></div>
+    <div class="v9-warning">Os resultados da V9 são exclusivamente simulados. Não representam lucro real nem autorização para operar na corretora. Uma estratégia só poderá ser aprovada após validação independente.</div>
+  </section>
+
   <div class="section"><h2>Posições abertas <span id="posCount"></span></h2><div class="positions" id="positions"><div class="empty">Carregando posições…</div></div></div>
   <div class="section"><h2>Mercado agora</h2><div class="signals" id="signals"></div></div>
 
@@ -141,6 +194,62 @@ async function load(){
 }
 load();
 setInterval(load,10000);
+
+/* V9: consumimos apenas um endpoint agregado, de leitura, sem tokens no celular. */
+const V9_API='https://wmxyqtvcyzvutajjzivl.supabase.co/functions/v1/ia-trader-v9-dashboard';
+const V9_NAMES={TREND:'Tendência',BREAKOUT:'Rompimento',REVERSION:'Reversão'};
+const V9_REASONS={HOURLY_REGIME:'Tendência horária desfavorável',VOLATILITY_FILTER:'Volatilidade fora da faixa',TREND_CRITERIA:'Critérios de tendência não atendidos',BREAKOUT_CRITERIA:'Rompimento não confirmado',REVERSION_CRITERIA:'Reversão não confirmada',EXISTING_POSITION:'Posição fictícia já aberta',MAX_STRATEGY_POSITIONS:'Limite de posições da estratégia',DAILY_PAPER_RISK_LIMIT:'Limite de perda diária na simulação',TREND_CONFIRM:'Tendência confirmada',BREAKOUT_CONFIRM:'Rompimento confirmado',REVERSION_CONFIRM:'Reversão confirmada'};
+const V9_LABELS={ENTER:'Oportunidade aceita',SKIP:'Aguardando',BLOCK:'Bloqueada'};
+const H=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function v9Strategy(s){
+ const count=N(s.closed_trades),rate=count?BR(s.win_rate_pct,1)+'%':'—';
+ const pf=s.profit_factor===null||s.profit_factor===undefined?'—':BR(s.profit_factor,2);
+ const a=s.activity_24h||{};
+ return '<article class="v9-strategy"><div class="head"><b>'+H(V9_NAMES[s.strategy]||s.strategy)+'</b><strong class="'+(count?C(s.net_pnl_usdt):'')+'">'+(count?M(s.net_pnl_usdt):'Sem resultado')+'</strong></div>'
+ +'<div class="v9-mini"><span>Concluídas<b>'+count+'</b></span><span>Acerto<b>'+rate+'</b></span><span>Fator lucro<b>'+pf+'</b></span></div>'
+ +'<div class="v9-hint">24h: '+N(a.accepted)+' aceitas · '+N(a.rejected)+' rejeitadas · '+N(a.blocked)+' bloqueadas</div>'
+ +'<div class="v9-hint">Amostra: '+count+' / '+N(s.paper_sample_target||300)+' operações para revisão</div></article>';
+}
+function v9Trade(t){
+ const closed=t.status==='CLOSED',pnl=closed&&t.pnl_net_usdt!==null?M(t.pnl_net_usdt):'Acompanhando';
+ return '<div class="v9-entry"><b>'+H((t.symbol||'').replace('USDT',''))+' · '+H(V9_NAMES[t.strategy]||t.strategy)+'</b><span style="float:right" class="'+(closed?C(t.pnl_net_usdt):'')+'">'+H(pnl)+'</span>'
+ +'<div class="row"><span>'+(closed?'Encerrada':'Aberta')+' · '+H(t.side||'LONG')+'</span><span>'+H(DT(closed?t.exit_at:t.entry_at))+'</span></div>'
+ +'<div class="row"><span>Entrada: '+P(t.entry_price)+'</span><span>'+(closed?'Saída: '+P(t.exit_price):'Stop: '+P(t.stop_price))+'</span></div></div>';
+}
+function v9Decision(t){
+ return '<div class="v9-entry"><b>'+H((t.symbol||'').replace('USDT',''))+' · '+H(V9_NAMES[t.strategy]||t.strategy)+'</b><span style="float:right">'+H(V9_LABELS[t.decision]||t.decision)+'</span>'
+ +'<div class="row"><span>'+H(V9_REASONS[t.reason]||t.reason)+'</span><span>'+H(DT(t.signal_time))+'</span></div></div>';
+}
+async function loadV9(){
+ try{
+  const response=await fetch(V9_API,{cache:'no-store'});
+  if(!response.ok)throw new Error('HTTP '+response.status);
+  const d=await response.json();
+  if(!d.ok||d.lab?.mode!=='PAPER_ONLY'||d.lab?.live_trading_allowed!==false)throw new Error('Validação de segurança indisponível');
+  const t=d.totals||{},last=d.last_run||{};
+  const healthy=d.lab.enabled===true&&last.status==='OK'&&last.finished_at&&(Date.now()-new Date(last.finished_at).getTime())<16*60000;
+  $('v9Status').textContent=healthy?'SIMULAÇÃO ATIVA':!d.lab.enabled?'DESATIVADO':'VERIFICAR DADOS';
+  $('v9Status').style.color=healthy?'#65e7aa':'#ffcb73';
+  $('v9Updated').textContent=last.finished_at?'Último ciclo: '+DT(last.finished_at)+' · '+N(last.scanned_symbols)+' moedas analisadas':'Nenhum ciclo registrado ainda';
+  $('v9Pnl').textContent=N(t.closed_trades)?M(t.net_pnl_usdt):'—';
+  $('v9Pnl').className=C(t.net_pnl_usdt);
+  $('v9Open').textContent=N(t.open_trades);
+  $('v9Closed').textContent=N(t.closed_trades);
+  $('v9Decisions24').textContent=N(t.decisions_24h);
+  $('v9Summary').textContent='Últimas 24h: '+N(t.accepted_24h)+' oportunidades aceitas, '+N(t.rejected_24h)+' rejeitadas e '+N(t.blocked_24h)+' bloqueadas. '+(N(t.closed_trades)?'Taxa de acerto: '+BR(t.win_rate_pct,1)+'%.':'Ainda sem operações fictícias encerradas.');
+  $('v9Strategies').innerHTML=(d.strategies||[]).length?d.strategies.map(v9Strategy).join(''):'<div class="v9-empty">Sem estratégias disponíveis.</div>';
+  $('v9Trades').innerHTML=(d.recent_trades||[]).length?d.recent_trades.slice(0,6).map(v9Trade).join(''):'<div class="v9-empty">Nenhuma operação fictícia aberta ou encerrada até agora.</div>';
+  $('v9Decisions').innerHTML=(d.recent_decisions||[]).length?d.recent_decisions.slice(0,6).map(v9Decision).join(''):'<div class="v9-empty">Nenhuma decisão registrada ainda.</div>';
+ }catch(e){
+  $('v9Status').textContent='SEM CONEXÃO';
+  $('v9Status').style.color='#ff858e';
+  $('v9Updated').textContent='Não foi possível verificar os dados da V9. O painel principal continua independente.';
+  $('v9Summary').textContent='Dados indisponíveis; não interpretar valores anteriores como atuais.';
+ }
+}
+loadV9();
+setInterval(loadV9,60000);
+
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 let deferredPrompt=null;
